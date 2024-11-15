@@ -27,9 +27,9 @@ phases:
       - echo "--------------------------------Pushing the Docker image--------------------------------"
       - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ENVIRONMENT/$IMAGE_REPO_NAME:node-alpine3.18
       - echo "--------------------------------Updating fsa-stack helm chart repository with latest image tag--------------------------------"
-      - git config --global user.email "elliotmtz12@gmail.com"
-      - git config --global user.name "eduardo elliot martinez palomino"
-      - git clone https://github.com/giraffeman123/fsa-stack.git
+      - git config --global user.name "${GITHUB_USER}"            
+      - git config --global user.email "${GITHUB_USER_EMAIL}"      
+      - git clone https://giraffeman123:$GITHUB_TOKEN@github.com/giraffeman123/fsa-stack.git
       - cd fsa-stack/
       - yq -i '.deployment.fsaApi.imageTag="node-alpine3.18"' values.yaml
       - git add .
