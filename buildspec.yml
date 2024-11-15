@@ -24,6 +24,7 @@ phases:
   post_build:
     commands:
       - echo "--------------------------------Build completed on `date`--------------------------------"
+      - echo "--------------------------------PRINT CODEBUILD_RESOLVED_SOURCE_VERSION=${CODEBUILD_RESOLVED_SOURCE_VERSION}--------------------------------"      
       - echo "--------------------------------Pushing the Docker image--------------------------------"
       - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ENVIRONMENT/$IMAGE_REPO_NAME:node-alpine3.18
       - echo "--------------------------------Updating fsa-stack helm chart repository with latest image tag--------------------------------"
