@@ -34,7 +34,7 @@ phases:
       - git config --global user.email "${GITHUB_USER_EMAIL}"      
       - git clone https://giraffeman123:$GITHUB_TOKEN@github.com/giraffeman123/fsa-stack.git
       - cd fsa-stack/
-      - yq -i '.deployment.fsaApi.imageTag="${IMAGE_TAG}"' values.yaml
+      - yq -i '.deployment.fsaApi.imageTag=env(IMAGE_TAG)' values.yaml
       - git add .
       - git commit -m "updated helm chart with new ${IMAGE_REPO_NAME} image. IMAGE_TAG=${IMAGE_TAG}, CODEBUILD_ID=${CODEBUILD_BUILD_ID}"
       - git push origin main
