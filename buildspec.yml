@@ -17,22 +17,24 @@ phases:
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
   build:
     commands:
-      - echo "--------------------------------Build started on `date`--------------------------------"
-      - echo "--------------------------------Building the Docker image--------------------------------"        
-      - docker build -t $IMAGE_REPO_NAME:node-alpine3.18 .
-      - docker tag $IMAGE_REPO_NAME:node-alpine3.18 $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ENVIRONMENT/$IMAGE_REPO_NAME:node-alpine3.18      
+      - echo "--------------------------------Build started on `date`--------------------------------"    
+      - echo "--------------------------------Creating tag for docker image--------------------------------"       
+      - COMMIT_ID=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7); IMAGE_TAG="1.0.0-${COMMIT_ID}"; export IMAGE_TAG=$IMAGE_TAG
+      - echo "--------------------------------Building the Docker image--------------------------------"  
+      - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ENVIRONMENT/$IMAGE_REPO_NAME:$IMAGE_TAG      
   post_build:
     commands:
       - echo "--------------------------------Build completed on `date`--------------------------------"
-      - echo "--------------------------------PRINT CODEBUILD_RESOLVED_SOURCE_VERSION=${CODEBUILD_RESOLVED_SOURCE_VERSION}--------------------------------"      
+      - echo "--------------------------------PRINT CODEBUILD_RESOLVED_SOURCE_VERSION=${IMAGE_TAG}--------------------------------"      
       - echo "--------------------------------Pushing the Docker image--------------------------------"
-      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ENVIRONMENT/$IMAGE_REPO_NAME:node-alpine3.18
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ENVIRONMENT/$IMAGE_REPO_NAME:$IMAGE_TAG
       - echo "--------------------------------Updating fsa-stack helm chart repository with latest image tag--------------------------------"
       - git config --global user.name "${GITHUB_USER}"            
       - git config --global user.email "${GITHUB_USER_EMAIL}"      
       - git clone https://giraffeman123:$GITHUB_TOKEN@github.com/giraffeman123/fsa-stack.git
       - cd fsa-stack/
-      - yq -i '.deployment.fsaApi.imageTag="node-alpine3.18"' values.yaml
+      - yq -i '.deployment.fsaApi.imageTag="${IMAGE_TAG}"' values.yaml
       - git add .
-      - git commit -m "updated fsa-api image tag to node-alpine3.18"
+      - git commit -m "updated helm chart with new ${IMAGE_REPO_NAME} image. IMAGE_TAG=${IMAGE_TAG}, CODEBUILD_ID=${CODEBUILD_BUILD_ID}"
       - git push origin main
