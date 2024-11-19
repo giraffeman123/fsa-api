@@ -12,10 +12,12 @@ phases:
       - sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
       - sudo chmod +x /usr/bin/yq
   pre_build:
+    on-failure: ABORT
     commands:
       - echo "--------------------------------Logging in to Amazon ECR--------------------------------"
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
   build:
+    on-failure: ABORT  
     commands:
       - echo "--------------------------------Build started on `date`--------------------------------"    
       - echo "--------------------------------Creating tag for docker image--------------------------------"       
@@ -34,6 +36,7 @@ phases:
           docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ENVIRONMENT/$IMAGE_REPO_NAME:$IMAGE_TAG         
         fi     
   post_build:
+    on-failure: ABORT  
     commands:
       - |
         if [ -n "$IMAGE_TAG_EXISTS" ] 
