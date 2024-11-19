@@ -20,8 +20,9 @@ phases:
       - echo "--------------------------------Build started on `date`--------------------------------"    
       - echo "--------------------------------Creating tag for docker image--------------------------------"       
       - COMMIT_ID=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7); IMAGE_TAG="1.0.0-${COMMIT_ID}"; export IMAGE_TAG=$IMAGE_TAG
-      - IMAGE_TAG_EXISTS=$(aws ecr list-images --repository-name $ENVIRONMENT/$IMAGE_REPO_NAME --query 'imageIds[]' | jq -r '.[] | select(.imageTag=="'$IMAGE_TAG'")'); export IMAGE_TAG_EXISTS
+      - IMAGE_TAG_EXISTS=$(aws ecr list-images --repository-name $ENVIRONMENT/$IMAGE_REPO_NAME --query 'imageIds[]' | jq -r '.[] | select(.imageTag=="'$IMAGE_TAG'")'); export IMAGE_TAG_EXISTS=$IMAGE_TAG_EXISTS
       - echo "--------------------------------Validating if tag for docker image exists--------------------------------"   
+      - echo $IMAGE_TAG_EXISTS
       - |
         if [ ! -z $IMAGE_TAG_EXISTS ] 
         then 
