@@ -20,23 +20,26 @@ phases:
       - echo "--------------------------------Build started on `date`--------------------------------"    
       - echo "--------------------------------Creating tag for docker image--------------------------------"       
       - COMMIT_ID=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c1-7); IMAGE_TAG="1.0.0-${COMMIT_ID}"; export IMAGE_TAG=$IMAGE_TAG
+      - echo $IMAGE_TAG
       - IMAGE_TAG_EXISTS=$(aws ecr list-images --repository-name $ENVIRONMENT/$IMAGE_REPO_NAME --query 'imageIds[]' | jq -r '.[] | select(.imageTag=="'$IMAGE_TAG'")'); export IMAGE_TAG_EXISTS=$IMAGE_TAG_EXISTS
       - echo "--------------------------------Validating if tag for docker image exists--------------------------------"   
       - echo $IMAGE_TAG_EXISTS
       - |
-        if [ ! -z $IMAGE_TAG_EXISTS ] 
+        if [ -n "$IMAGE_TAG_EXISTS" ] 
         then 
+          echo "--------------------------------Image tag already exists--------------------------------"          
+        else 
           echo "--------------------------------Building the Docker image--------------------------------"  
           docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
-          docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ENVIRONMENT/$IMAGE_REPO_NAME:$IMAGE_TAG 
-        else 
-          echo "--------------------------------Image tag already exists--------------------------------"  
+          docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$ENVIRONMENT/$IMAGE_REPO_NAME:$IMAGE_TAG         
         fi     
   post_build:
     commands:
       - |
-        if [ ! -z $IMAGE_TAG_EXISTS ] 
+        if [ -n "$IMAGE_TAG_EXISTS" ] 
         then           
+          echo "--------------------------------Image tag already exists--------------------------------"          
+        else 
           echo "--------------------------------Build completed on `date`--------------------------------"
           echo "--------------------------------PRINT CODEBUILD_RESOLVED_SOURCE_VERSION=${IMAGE_TAG}--------------------------------"      
           echo "--------------------------------Pushing the Docker image--------------------------------"
@@ -49,7 +52,5 @@ phases:
           yq -i '.deployment.fsaApi.imageTag=env(IMAGE_TAG)' values.yaml
           git add .
           git commit -m "updated helm chart with new ${IMAGE_REPO_NAME} image. IMAGE_TAG=${IMAGE_TAG}, CODEBUILD_ID=${CODEBUILD_BUILD_ID}"
-          git push origin main          
-        else 
-          echo "--------------------------------Image tag already exists--------------------------------"  
+          git push origin main                    
         fi    
